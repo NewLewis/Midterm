@@ -19,8 +19,6 @@ import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
@@ -36,6 +34,10 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.util.*;
+import android.widget.Toolbar;
+
+import com.zaaach.toprightmenu.TopRightMenu;
+import com.zaaach.toprightmenu.MenuItem;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -47,8 +49,6 @@ import jp.wasabeef.recyclerview.adapters.AlphaInAnimationAdapter;
 import jp.wasabeef.recyclerview.adapters.ScaleInAnimationAdapter;
 import jp.wasabeef.recyclerview.animators.OvershootInLeftAnimator;
 
-import static android.graphics.Color.GREEN;
-import static android.hardware.camera2.params.RggbChannelVector.RED;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -57,6 +57,9 @@ public class MainActivity extends AppCompatActivity {
     List<Map<String,Object>> listItems;
     List<Role> data;
     RoleHelper roleHelper = new RoleHelper(this);
+    TopRightMenu mTopRightMenu;
+    Toolbar mToolbar;
+    ImageButton menu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -131,52 +134,46 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(),"移除角色"+data.get(position).getName(),Toast.LENGTH_SHORT).show();
                 commonAdapter.Remove(position);
                 roleHelper.delete(Integer.toString(data.get(position).getId()));
-
             }
         });
 
-//        ImageButton addRole = (ImageButton)findViewById(R.id.addrole);
-//        addRole.setOnClickListener(new View.OnClickListener(){
-//            @Override
-//            public void onClick(View v){
-//                //create a new role
-//
-//                Role newRole = new Role(1,"角色名","性别","生卒年月","出生地","主效势力","其他信息",R.mipmap.c_caocao,R.mipmap.b_caocao);
-//                roleHelper.insert("角色名","性别","生卒年月","出生地","主效势力","其他信息",R.mipmap.c_caocao,R.mipmap.b_caocao);
-//                Cursor c = roleHelper.getByName("角色名");
-//                while(c.moveToNext()){
-//                    newRole.setId(roleHelper.getId(c));
-//                }
-//
-//                int i=data.size();
-//                data.add(newRole);
-//                Map<String,Object> tem=new LinkedHashMap<>();
-//                tem.put("name",newRole.getName());
-//                tem.put("src",newRole.getBgid());
-//                tem.put("index",i);
-//                listItems.add(tem);
-//
-//                Intent intent = new Intent(MainActivity.this, RoleInfo.class);
-//                Bundle bundle = new Bundle();
-//                bundle.putSerializable("Role",newRole);
-//                bundle.putInt("Index",i);
-//                bundle.putInt("Add",1);
-//                intent.putExtras(bundle);
-//                startActivityForResult(intent,1);
-//            }
-//        });
+        menu = (ImageButton)findViewById(R.id.so);
+        menu.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                mTopRightMenu = new TopRightMenu(MainActivity.this);
 
-//        ImageButton searchRole=(ImageButton)findViewById(R.id.search);
-//        searchRole.setOnClickListener(new View.OnClickListener(){
-//            @Override
-//            public void onClick(View v){
-//                Intent intent = new Intent(MainActivity.this, InfoSearch.class);
-//                startActivityForResult(intent,1);
-//            }
-//        });
+                //添加菜单项
+                List<MenuItem> menuItems = new ArrayList<>();
+                menuItems.add(new MenuItem(R.drawable.add,"新增"));
+                menuItems.add(new MenuItem(R.drawable.search, "查询"));
+
+                mTopRightMenu
+                        .setHeight(270)     //默认高度480
+                        .setWidth(320)      //默认宽度wrap_content
+                        .showIcon(true)     //显示菜单图标，默认为true
+                        .dimBackground(true)        //背景变暗，默认为true
+                        .needAnimationStyle(true)   //显示动画，默认为true
+                        .setAnimationStyle(R.style.TRM_ANIM_STYLE)
+                        .addMenuList(menuItems)
+                        .setOnMenuItemClickListener(new TopRightMenu.OnMenuItemClickListener() {
+                            @Override
+                            public void onMenuItemClick(int position) {
+                                if(position == 0){
+                                    newRole();
+                                }else if(position == 1){
+                                    searchRole();
+                                }
+                                //Toast.makeText(MainActivity.this, "点击菜单:" + position, Toast.LENGTH_SHORT).show();
+                            }
+                        })
+                        .showAsDropDown(view, -225, 0);	//带偏移量
+            }
+        });
 
         database.close();
 
+        //添加动画recyclerView的动画效果
         AlphaInAnimationAdapter alphaAdapter = new AlphaInAnimationAdapter(commonAdapter);
         alphaAdapter.setDuration(1000);
         alphaAdapter.setFirstOnly(true);
@@ -187,60 +184,14 @@ public class MainActivity extends AppCompatActivity {
         mRecyclerView.setItemAnimator(new OvershootInLeftAnimator());
     }
 
-    @Override
-    public boolean onMenuOpened(int featured,Menu menu){
-        setOverflowIconVisible(featured,menu);
-        return super.onMenuOpened(featured,menu);
-    }
-
-    private void setOverflowIconVisible(int featureId, Menu menu) {
-        if (featureId == Window.FEATURE_ACTION_BAR && menu != null) {
-            if (menu.getClass().getSimpleName().equals("MenuBuilder")) {
-                try {
-                    Method m = menu.getClass().getDeclaredMethod(
-                            "setOptionalIconsVisible", Boolean.TYPE);
-                    m.setAccessible(true);
-                    m.invoke(menu, true);
-                } catch (Exception e) {
-                    Log.d("OverflowIconVisible", e.getMessage());
-                }
-            }
-        }
-    }
-
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.main,menu);
-        return true;
-    }
-
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        switch (id) {
-            case R.id.newOne:
-                newRole();
-                break;
-            case R.id.search:
-                searchRole();
-                break;
-            case R.id.flash:
-                commonAdapter.notifyDataSetChanged();
-                break;
-        }
-        return super.onOptionsItemSelected(item);
-    }
 
     private void newRole(){
         Role newRole = new Role(1,"角色名","性别","生卒年月","出生地","主效势力","其他信息",R.mipmap.c_caocao,R.mipmap.b_caocao);
-        roleHelper.insert("角色名","性别","生卒年月","出生地","主效势力","其他信息",R.mipmap.c_caocao,R.mipmap.b_caocao);
-        Cursor c = roleHelper.getByName("角色名");
-        while(c.moveToNext()){
-            newRole.setId(roleHelper.getId(c));
-        }
+//        roleHelper.insert("角色名","性别","生卒年月","出生地","主效势力","其他信息",R.mipmap.c_caocao,R.mipmap.b_caocao);
+//        Cursor c = roleHelper.getByName("角色名");
+//        while(c.moveToNext()){
+//            newRole.setId(roleHelper.getId(c));
+//        }
 
         int i=data.size();
         data.add(newRole);
@@ -354,7 +305,6 @@ public class MainActivity extends AppCompatActivity {
                         database.close();
                     }
                 }
-
             }
         }
     }

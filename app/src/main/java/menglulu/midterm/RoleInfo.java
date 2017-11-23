@@ -2,10 +2,14 @@ package menglulu.midterm;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -17,6 +21,9 @@ import android.widget.ListView;
 import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.zaaach.toprightmenu.MenuItem;
+import com.zaaach.toprightmenu.TopRightMenu;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,15 +54,18 @@ public class RoleInfo extends AppCompatActivity{
     private EditText force_e;
     private EditText otherinfo_e;
 
+
     ImageButton pic;
-    ImageButton back;
     ImageButton edit;
+
 
     public static final int REQUEST_CAMERA = 1;
     public static final int REQUEST_ALBUM = 2;
     public static final int REQUEST_CROP = 3;
 
     private File mImageFile;
+
+    RoleHelper roleHelper = new RoleHelper(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState){
@@ -77,10 +87,9 @@ public class RoleInfo extends AppCompatActivity{
         otherinfo_e = (EditText)findViewById(R.id.otherinfo_edit);
 
         pic = (ImageButton) findViewById(R.id.imageView);
-        back = (ImageButton)findViewById(R.id.back);
         edit = (ImageButton)findViewById(R.id.edit);
 
-        edit_f=0;
+        edit_f=0; //初始化为0,用于判断edit的状态
 
         Bundle bundle = new Bundle();
         bundle = getIntent().getExtras();
@@ -106,14 +115,13 @@ public class RoleInfo extends AppCompatActivity{
         }
 
 
-
         name.setText(role.getName());
         time.setText(role.getTime());
         sex.setText(role.getSex());
         bornplace.setText(role.getBornplace());
         force.setText(role.getForce());
         otherinfo.setText(role.getOtherinfo());
-        pic.setImageResource(role.getPicid());
+        pic.setBackgroundResource(role.getPicid());
 
         name_e.setText(role.getName());
         time_e.setText(role.getTime());
@@ -122,41 +130,8 @@ public class RoleInfo extends AppCompatActivity{
         force_e.setText(role.getForce());
         otherinfo_e.setText(role.getOtherinfo());
 
-        //action: back
-        back.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(RoleInfo.this, MainActivity.class);
-                Bundle bundle = new Bundle();
-                bundle.putSerializable("Role",role);
-                bundle.putInt("Index",index);
-                intent.putExtras(bundle);
 
-                setResult(1,intent);
-                finish();
-            }
-        });
 
-        //点击人物头像选择图片
-        pic.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View view){
-                new AlertDialog.Builder(RoleInfo.this)
-                        .setTitle("选择照片")
-                        .setItems(new String[]{"拍照", "相册"}, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialogInterface, int i) {
-                                if (i == 0) {
-                                    selectCamera();
-                                } else {
-                                    selectAlbum();
-                                }
-                            }
-                        })
-                        .create()
-                        .show();
-            }
-        });
 
         //action: edit
         edit.setOnClickListener(new View.OnClickListener() {
@@ -177,9 +152,17 @@ public class RoleInfo extends AppCompatActivity{
                     force_e.setVisibility(View.VISIBLE);
                     otherinfo_e.setVisibility(View.VISIBLE);
 
+
                     edit_f=1;
                 }
                 else{
+                    //点击人物头像选择图片
+                    pic.setOnClickListener(new View.OnClickListener(){
+                        @Override
+                        public void onClick(View view){
+                            selectAlbum();
+                        }
+                    });
                     role.setRole(name_e.getText().toString(),
                             time_e.getText().toString(),
                             sex_e.getText().toString(),
@@ -210,20 +193,17 @@ public class RoleInfo extends AppCompatActivity{
 
                     edit_f=0;
 
+                    roleHelper.insert(role.getName(),role.getSex(),role.getTime(),role.getBornplace(),role.getForce(),role.getOtherinfo(),role.getPicid(),role.getBgid());
+                    Cursor c = roleHelper.getByName(role.getName());
+                    while(c.moveToNext()){
+                        role.setId(roleHelper.getId(c));
+                    }
+
                 }
             }
         });
     }
 
-    private void selectCamera() {
-        createImageFile();
-        if (!mImageFile.exists()) {
-            return;
-        }
-        Intent cameraIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        cameraIntent.putExtra(MediaStore.EXTRA_OUTPUT, Uri.fromFile(mImageFile));
-        startActivityForResult(cameraIntent, REQUEST_CAMERA);
-    }
 
     private void selectAlbum() {
         Intent albumIntent = new Intent(Intent.ACTION_PICK);
@@ -241,14 +221,18 @@ public class RoleInfo extends AppCompatActivity{
     }
 
     private void createImageFile() {
-        mImageFile = new File(Environment.getExternalStorageDirectory(), System.currentTimeMillis() + ".jpg");
+        mImageFile = new File(getExternalCacheDir(), System.currentTimeMillis() + ".jpg");
         try {
+            if(mImageFile.exists()){
+                mImageFile.delete();
+            }
             mImageFile.createNewFile();
         } catch (IOException e) {
             e.printStackTrace();
             Toast.makeText(this, "出错啦", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

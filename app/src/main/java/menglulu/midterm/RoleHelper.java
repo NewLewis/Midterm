@@ -29,7 +29,7 @@ class RoleHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL("CREATE TABLE roles (_id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, sex TEXT, time TEXT, bornplace TEXT, force TEXT, otherinfo TEXT, picid INTEGER, bgid INTEGER);");
+        db.execSQL(CREATE_CATEGORY);
         for(int i=0; i<10; i++){
             ContentValues cv=new ContentValues();
             cv.put("name", Name[i]);
@@ -78,12 +78,20 @@ class RoleHelper extends SQLiteOpenHelper {
                         args));
     }
 
-    public Cursor getByName(String name) {//根据点击事件获取id,查询数据库
+    public Cursor getByName(String Name) {//根据点击事件获取id,查询数据库
+        String[] args={Name};
+
+        return(getReadableDatabase()
+                .rawQuery("SELECT _id, name, sex, time, bornplace, force, otherinfo, picid, bgid FROM roles WHERE name = ?",
+                        args));
+    }
+
+    public Cursor getByLikeName(String name) {//根据点击事件获取id,查询数据库
+        name = "%" + name + "%";
         String[] args={name};
 
         return(getReadableDatabase()
-                .rawQuery("SELECT _id, name, sex, time, bornplace, force, otherinfo, picid, bgid FROM roles WHERE name=?",
-                        args));
+                .rawQuery("SELECT _id, name, sex, time, bornplace, force, otherinfo, picid, bgid FROM roles WHERE name like ?", args));
     }
 
     public void insert(String Name, String Sex, String Time, String Bornplace, String Force, String Otherinfo, int Picid, int Bgid) {

@@ -3,24 +3,14 @@
     android:orientation="vertical" android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <CheckBox
-        android:id="@+id/name_check"
+    <SearchView
+        android:id="@+id/search"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Search by name" />
+        android:layout_height="wrap_content"/>
 
-    <EditText
-        android:id="@+id/name_search"
+    <ListView
+        android:id="@+id/item"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="Name" />
-
-    <Button
-        android:id="@+id/enter"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Enter" />
+        android:layout_height="match_parent"/>
 
 </LinearLayout>

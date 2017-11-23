@@ -5,7 +5,7 @@
     <item
         android:id="@+id/flash"
         android:orderInCategory="8"
-        android:icon="@drawable/refresh"
+        android:icon="@drawable/flash"
         app:showAsAction="ifRoom"
         android:title="刷新"/>
 
@@ -19,7 +19,7 @@
     <item
         android:id="@+id/search"
         android:orderInCategory="2"
-        android:icon="@drawable/search1"
+        android:icon="@drawable/search"
         app:showAsAction="never"
         android:title="搜索"/>
 
